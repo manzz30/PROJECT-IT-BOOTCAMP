@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi - FaceAttend AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-brain"></i> FaceAttend AI
+            </a>
+            <a href="index.html" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-home"></i> Kembali
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5 pt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body p-4 text-center">
+                        <h2 class="mb-3">
+                            <i class="fas fa-camera text-primary"></i> Absensi Real-Time
+                        </h2>
+                        
+                        <!-- Status Indicator -->
+                        <div id="detectionStatus" class="alert alert-info py-2 mb-3">
+                            <i class="fas fa-spinner fa-spin"></i> Memuat sistem...
+                        </div>
+                        
+                        <div class="video-container mb-4">
+                            <video id="video" autoplay muted playsinline></video>
+                            <canvas id="overlay"></canvas>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div id="verificationBox" class="mb-3" style="display: none;">
+                            <div class="progress">
+                                <div id="verificationProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%">
+                                    Verifikasi: 0%
+                                </div>
+                            </div>
+                            <p class="mt-2 text-info">
+                                <i class="fas fa-spinner fa-spin"></i> 
+                                Verifikasi kehadiran... Jangan bergerak!
+                            </p>
+                        </div>
+                        
+                        <!-- Result Box -->
+                        <div id="resultBox" class="status-box" style="display: none;">
+                            <h3 id="resultTitle"></h3>
+                            <p id="resultMessage" class="mb-0"></p>
+                        </div>
+                        
+                        <!-- Controls -->
+                        <div class="d-grid gap-2 col-md-8 mx-auto">
+                            <button id="startBtn" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play"></i> Mulai Absensi
+                            </button>
+                            <button id="stopBtn" class="btn btn-danger btn-lg" style="display: none;">
+                                <i class="fas fa-stop"></i> Stop Kamera
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-dark mt-4 text-start">
+                            <i class="fas fa-lightbulb text-warning"></i> 
+                            <strong>Tips Absensi:</strong>
+                            <ol class="mb-0 mt-2">
+                                <li>Klik "Mulai Absensi" & izinkan akses kamera</li>
+                                <li>Hadapkan wajah langsung ke kamera</li>
+                                <li>Tunggu progress bar mencapai 100%</li>
+                                <li>Hasil akan muncul otomatis</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/attendance.js"></script>
+</body>
+</html>
