@@ -3,8 +3,11 @@
 // Core Utilities & API Configuration
 // ============================================
 
-// API Configuration
-const API_URL = "http://localhost:8000/api";
+// 🔥 API Configuration - Auto detect environment
+// Untuk Vercel: pakai relative path, untuk lokal: localhost
+const API_URL = window.location.hostname === 'localhost' 
+    ? "http://localhost:8000/api" 
+    : "/api";
 
 // ============================================
 // UTILITY: Show Notification (Toast Premium)
@@ -177,7 +180,6 @@ function isValidEmail(email) {
 // UTILITY: Validate NIM/NIP Format
 // ============================================
 function isValidNIM(nim) {
-    // Accept alphanumeric, min 5 chars, max 20 chars
     return /^[a-zA-Z0-9]{5,20}$/.test(nim);
 }
 
@@ -207,7 +209,6 @@ window.addEventListener("load", async () => {
 // ============================================
 window.addEventListener("error", (event) => {
     console.error("Global error:", event.error);
-    // Don't show to user in production, but log for debugging
 });
 
 // ============================================
