@@ -2,130 +2,345 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard - FaceAttend AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --accent: #06b6d4; --bg: #0f172a; --card: #1e293b; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #f8fafc; min-height: 100vh; overflow-x: hidden; }
+        
+        .nav-bar { padding: 1.5rem 2rem; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .brand { font-size: 1.5rem; font-weight: 800; color: white; display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--primary); }
+        
+        .btn-logout { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+        .btn-logout:hover { background: #ef4444; color: white; }
+
+        .container { max-width: 1200px; padding: 3rem 1.5rem; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+        .stat-card {
+            background: var(--card); border-radius: 16px; padding: 2rem; position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s; animation: slideUp 0.6s ease backwards;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .stat-card h3 { font-size: 2.5rem; font-weight: 800; margin: 0; }
+        .stat-card p { color: #94a3b8; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-icon { position: absolute; right: 20px; top: 20px; font-size: 3rem; opacity: 0.1; color: white; }
+        
+        .stat-card.purple { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+        .stat-card.green { background: linear-gradient(135deg, #052e16, #14532d); }
+        .stat-card.orange { background: linear-gradient(135deg, #431407, #9a3412); }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+        .menu-item {
+            background: var(--card); border-radius: 20px; padding: 2rem; text-align: center; text-decoration: none; color: white;
+            border: 1px solid rgba(255,255,255,0.05); transition: all 0.4s; position: relative; overflow: hidden;
+            animation: slideUp 0.8s ease backwards;
+        }
+        .menu-item:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); border-color: var(--accent); }
+        .menu-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--accent); transition: 0.3s; }
+        .menu-item:hover .menu-icon { transform: scale(1.2) rotate(5deg); color: #fff; }
+        
+        /* Table Section */
+        .table-section {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 1s ease;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .table-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .btn-export {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-export:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16,185,129,0.3); }
+        
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+        .custom-table th, .custom-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .custom-table th {
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        .custom-table tr:hover { background: rgba(99,102,241,0.05); }
+        .badge-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-tepat { background: rgba(16,185,129,0.2); color: #10b981; }
+        .badge-terlambat { background: rgba(239,68,68,0.2); color: #ef4444; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; }
+        
+        .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) { 
+            .container { padding: 1rem; } 
+            .stats-grid { grid-template-columns: 1fr; }
+            .menu-grid { grid-template-columns: 1fr; }
+            .custom-table { font-size: 0.85rem; }
+            .custom-table th, .custom-table td { padding: 0.75rem 0.5rem; }
+            .nav-bar { padding: 1rem; }
+            .brand { font-size: 1.2rem; }
+            .btn-logout { padding: 0.4rem 1rem; font-size: 0.85rem; }
+            .table-section { padding: 1rem; }
+            .table-header { flex-direction: column; align-items: flex-start; }
+            .btn-export { width: 100%; justify-content: center; }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card { padding: 1.2rem; }
+            .stat-card h3 { font-size: 2rem; }
+            .menu-item { padding: 1.5rem 1rem; }
+        }
+    </style>
 </head>
-<body class="bg-dark text-light">
-    <!-- Navbar -->
-    <nav class="navbar navbar-dark bg-primary shadow">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="index.html">
-                <i class="fas fa-graduation-cap"></i> FaceAttend AI
-            </a>
-            <a href="index.html" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-home"></i> Kembali
-            </a>
-        </div>
+<body>
+    <nav class="nav-bar">
+        <div class="brand"><i class="fas fa-brain"></i> FaceAttend AI</div>
+        <a href="/login" onclick="logout()" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-12">
-                <div class="card bg-dark border-primary">
-                    <div class="card-body p-4">
-                        <h2 class="mb-4">
-                            <i class="fas fa-chart-bar text-primary"></i> Dashboard Absensi
-                        </h2>
-                        
-                        <!-- Statistics Cards -->
-                        <div class="row mb-4">
-                            <div class="col-md-3">
-                                <div class="card bg-success text-white">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                        <h3 id="totalHadir">0</h3>
-                                        <p class="mb-0">Hadir Hari Ini</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card bg-info text-white">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-clock fa-2x mb-2"></i>
-                                        <h3 id="totalTepatWaktu">0</h3>
-                                        <p class="mb-0">Tepat Waktu</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card bg-warning text-dark">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                                        <h3 id="totalTerlambat">0</h3>
-                                        <p class="mb-0">Terlambat</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card bg-primary text-white">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-users fa-2x mb-2"></i>
-                                        <h3 id="totalUser">0</h3>
-                                        <p class="mb-0">Total Terdaftar</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Date Filter -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-dark text-light border-secondary">
-                                        <i class="fas fa-calendar"></i> Pilih Tanggal:
-                                    </span>
-                                    <input type="date" id="dateFilter" class="form-control bg-dark text-light border-secondary">
-                                    <button class="btn btn-primary" onclick="loadAttendanceData()">
-                                        <i class="fas fa-sync-alt"></i> Refresh
-                                    </button>
-                                    <button class="btn btn-success" onclick="exportToExcel()">
-                                        <i class="fas fa-file-excel"></i> Export Excel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Attendance Table -->
-                        <div class="table-responsive">
-                            <table class="table table-dark table-striped table-hover">
-                                <thead class="table-primary">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama</th>
-                                        <th>NIM/NIP</th>
-                                        <th>Tanggal</th>
-                                        <th>Waktu Masuk</th>
-                                        <th>Status</th>
-                                        <th>Confidence</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="attendanceTable">
-                                    <tr>
-                                        <td colspan="7" class="text-center">
-                                            <span class="spinner-border spinner-border-sm"></span> 
-                                            Memuat data...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div id="noDataMessage" class="alert alert-info text-center" style="display: none;">
-                            <i class="fas fa-info-circle"></i> Belum ada data absensi untuk tanggal ini
-                        </div>
-                    </div>
-                </div>
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card purple delay-1">
+                <p><span class="live-dot"></span>Total Hadir Hari Ini</p>
+                <h3 id="countTotal">0</h3>
+                <i class="fas fa-users stat-icon"></i>
+            </div>
+            <div class="stat-card green delay-2">
+                <p>Tepat Waktu</p>
+                <h3 id="countOnTime">0</h3>
+                <i class="fas fa-check-circle stat-icon"></i>
+            </div>
+            <div class="stat-card orange delay-3">
+                <p>Terlambat</p>
+                <h3 id="countLate">0</h3>
+                <i class="fas fa-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+
+        <!-- Menus -->
+        <div class="menu-grid">
+            <a href="/attendance" class="menu-item delay-1">
+                <div class="menu-icon"><i class="fas fa-camera"></i></div>
+                <h4>Absensi Wajah</h4>
+                <p>Scan wajah real-time dengan AI</p>
+            </a>
+            <a href="/admin" class="menu-item delay-2">
+                <div class="menu-icon"><i class="fas fa-shield-alt"></i></div>
+                <h4>Admin Panel</h4>
+                <p>Atur jam masuk & toleransi</p>
+            </a>
+            <a href="/users" class="menu-item delay-3">
+                <div class="menu-icon"><i class="fas fa-user-cog"></i></div>
+                <h4>Kelola User</h4>
+                <p>Lihat & hapus data pengguna</p>
+            </a>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h3 class="table-title"><i class="fas fa-list"></i> Absensi Hari Ini</h3>
+                <button class="btn-export" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Export ke Excel
+                </button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>NIM/NIP</th>
+                            <th>Jam Masuk</th>
+                            <th>Status</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTable">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                                Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script>
+        function logout() { localStorage.removeItem('user'); }
+        
+        let attendanceData = []; // Store data for export
+        
+        // Fetch Stats & Table Data
+        async function loadDashboard() {
+            try {
+                // Load Stats
+                const statsRes = await fetch('/api/stats/today');
+                const stats = await statsRes.json();
+                
+                animateValue("countTotal", stats.total);
+                animateValue("countOnTime", stats.on_time);
+                animateValue("countLate", stats.late);
+                
+                // Load Attendance Details
+                const attendRes = await fetch('/api/attendance/today');
+                attendanceData = await attendRes.json();
+                
+                renderTable();
+            } catch(e) { 
+                console.error(e);
+                document.getElementById('attendanceTable').innerHTML = `
+                    <tr><td colspan="6" class="empty-state" style="color:#ef4444">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+                        Gagal memuat data
+                    </td></tr>
+                `;
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('attendanceTable');
+            
+            if (attendanceData.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" class="empty-state">
+                        <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                        Belum ada absensi hari ini
+                    </td></tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = attendanceData.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${item.nama}</strong></td>
+                    <td><span style="background:#334155; padding:4px 8px; border-radius:6px; font-size:0.85rem;">${item.nim}</span></td>
+                    <td><i class="fas fa-clock" style="color:#06b6d4; margin-right:5px;"></i>${item.waktu_masuk}</td>
+                    <td><span class="badge-status ${item.status === 'Tepat Waktu' ? 'badge-tepat' : 'badge-terlambat'}">${item.status}</span></td>
+                    <td style="color:#94a3b8">${item.keterangan}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Number Animation
+        function animateValue(id, end) {
+            const obj = document.getElementById(id);
+            const start = parseInt(obj.innerText) || 0;
+            if (start === end) return;
+            const range = end - start;
+            const duration = 500;
+            let startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                obj.innerText = Math.floor(progress * range + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        // Export to Excel (CSV Format)
+        function exportToExcel() {
+            if (attendanceData.length === 0) {
+                alert('⚠️ Tidak ada data untuk diexport!');
+                return;
+            }
+            
+            const today = new Date().toLocaleDateString('id-ID', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            let csv = 'DATA ABSENSI HARI INI\n';
+            csv += `Tanggal: ${today}\n\n`;
+            csv += 'No,Nama Lengkap,NIM/NIP,Jam Masuk,Status,Keterangan\n';
+            
+            attendanceData.forEach((item, index) => {
+                csv += `${index + 1},"${item.nama}",${item.nim},${item.waktu_masuk},"${item.status}","${item.keterangan}"\n`;
+            });
+            
+            csv += `\n\nTotal Hadir: ${document.getElementById('countTotal').innerText}\n`;
+            csv += `Tepat Waktu: ${document.getElementById('countOnTime').innerText}\n`;
+            csv += `Terlambat: ${document.getElementById('countLate').innerText}`;
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Absensi_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success message
+            const btn = document.querySelector('.btn-export');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        // Initial Load & Auto Refresh Every 5 Seconds
+        loadDashboard();
+        setInterval(loadDashboard, 5000);
+    </script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Wajah - FaceAttend AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .reg-box { background: #1e293b; padding: 2.5rem; border-radius: 24px; border: 1px solid #334155; text-align: center; max-width: 480px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .camera-wrapper { width: 320px; height: 320px; margin: 0 auto 20px; border-radius: 16px; overflow: hidden; border: 3px solid #6366f1; position: relative; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        
+        .btn-action { border: none; color: white; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-capture { background: linear-gradient(135deg, #6366f1, #06b6d4); }
+        .btn-capture:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.3); }
+        .btn-save { background: linear-gradient(135deg, #10b981, #059669); display: none; }
+        
+        .step { font-size: 0.95rem; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; }
+        .status-msg { margin-top: 15px; font-weight: 600; min-height: 20px; }
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+    <div class="reg-box">
+        <h2><i class="fas fa-user-circle" style="color: #6366f1;"></i> Registrasi Wajah</h2>
+        <p class="step">Wajib: Ambil foto wajah Anda agar sistem bisa mengenali & mengizinkan absensi.</p>
+        
+        <div class="camera-wrapper">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <button class="btn-action btn-capture" id="captureBtn" onclick="takePhoto()">
+            <i class="fas fa-camera"></i> Jepret Foto Wajah
+        </button>
+        
+        <button class="btn-action btn-save" id="saveBtn" onclick="saveFace()">
+            <i class="fas fa-save"></i> Simpan & Lanjut ke Dashboard
+        </button>
+        
+        <p class="status-msg" id="statusMsg"></p>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if(!user) window.location.href = '/login';
+
+        // Start Camera
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then(s => {
+            video.srcObject = s;
+        }).catch(() => {
+            statusMsg.innerText = "⚠️ Gagal akses kamera. Izinkan akses di browser.";
+            statusMsg.style.color = "#ef4444";
+        });
+
+        function takePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            captureBtn.style.display = 'none';
+            saveBtn.style.display = 'flex';
+            video.style.opacity = '0.4';
+            statusMsg.innerText = "✅ Foto tertangkap. Klik Simpan untuk melanjutkan.";
+            statusMsg.style.color = "#10b981";
+        }
+
+        async function saveFace() {
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            saveBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/users/${user.id}/face`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_data: canvas.toDataURL('image/jpeg') })
+                });
+
+                const data = await res.json();
+                if(res.ok) {
+                    statusMsg.innerText = "✅ Berhasil! Mengalihkan ke Dashboard...";
+                    setTimeout(() => window.location.href = '/dashboard', 1500);
+                } else {
+                    statusMsg.innerText = "❌ " + (data.detail || "Gagal menyimpan.");
+                    statusMsg.style.color = "#ef4444";
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan & Lanjut';
+                }
+            } catch(e) {
+                statusMsg.innerText = "❌ Gagal koneksi server.";
+                statusMsg.style.color = "#ef4444";
+                saveBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

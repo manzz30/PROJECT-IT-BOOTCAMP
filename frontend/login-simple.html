@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #0f172a; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+        }
+        .box { 
+            background: #1e293b; 
+            padding: 2rem; 
+            border-radius: 12px; 
+            text-align: center; 
+            max-width: 400px;
+            border: 1px solid #334155;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: 1px solid #475569;
+            background: #334155;
+            color: white;
+            box-sizing: border-box;
+        }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: #6366f1; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .toggle { 
+            color: #94a3b8; 
+            cursor: pointer; 
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+        .toggle:hover { color: #6366f1; }
+        .error { 
+            color: #ef4444; 
+            background: rgba(239,68,68,0.1); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>🔐 FaceAttend AI</h2>
+        
+        <div id="err" class="error"></div>
+        
+        <!-- Login -->
+        <div id="loginBox">
+            <input type="text" id="nim" placeholder="NIM / NIP">
+            <input type="password" id="pass" placeholder="Password">
+            <button onclick="doLogin()">Masuk</button>
+            <div class="toggle" onclick="toggleForm()">Belum punya akun? Daftar</div>
+        </div>
+        
+        <!-- Register -->
+        <div id="regBox" style="display:none;">
+            <input type="text" id="rNama" placeholder="Nama Lengkap">
+            <input type="text" id="rNim" placeholder="NIM / NIP">
+            <input type="password" id="rPass" placeholder="Password (min 6)">
+            <button onclick="doRegister()">Daftar</button>
+            <div class="toggle" onclick="toggleForm()">Sudah punya akun? Login</div>
+        </div>
+    </div>
+
+    <script>
+        // Auto detect API URL
+        const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000/api'
+            : '/api';
+
+        function toggleForm() {
+            const l = document.getElementById('loginBox');
+            const r = document.getElementById('regBox');
+            const e = document.getElementById('err');
+            if (l.style.display === 'none') {
+                l.style.display = 'block'; r.style.display = 'none';
+            } else {
+                l.style.display = 'none'; r.style.display = 'block';
+            }
+            e.style.display = 'none';
+        }
+
+        async function doLogin() {
+            const nim = document.getElementById('nim').value;
+            const pass = document.getElementById('pass').value;
+            const err = document.getElementById('err');
+            
+            if (!nim || !pass) {
+                err.textContent = '⚠️ Isi NIM dan password!';
+                err.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nim_nip: nim, password: pass })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    err.textContent = '⚠️ ' + (data.detail || 'Login gagal');
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                err.textContent = '⚠️ Gagal koneksi ke server';
+                err.style.display = 'block';
+                console.error(e);
+            }
+        }
+
+        async function doRegister() {
+            const nama = document.getElementById('rNama').value;
+            const nim = document.getElementById('rNim').value;
+            const pass = document.getElementById('rPass').value;
+            const err = document.getElementById('err');
+            
+            if (!nama || !nim || pass.length < 6) {
+                err.textContent = '⚠️ Isi semua field & password min 6 karakter!';
+                err.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API}/register-manual`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nama_lengkap: nama,
+                        nim_nip: nim,
+                        email: '',
+                        jurusan: '',
+                        password: pass,
+                        face_embedding: '[]'
+                    })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert('✅ Registrasi berhasil! Silakan login.');
+                    toggleForm();
+                } else {
+                    err.textContent = '⚠️ ' + (data.detail || 'Registrasi gagal');
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                err.textContent = '⚠️ Gagal koneksi ke server';
+                err.style.display = 'block';
+                console.error(e);
+            }
+        }
+
+        // Auto redirect if logged in
+        if (localStorage.getItem('user')) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

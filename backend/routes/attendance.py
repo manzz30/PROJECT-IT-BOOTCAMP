@@ -1,106 +1,71 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from backend.database import get_db, User, Attendance, Settings
-from backend.utils.ai_engine import verify_face
 from pydantic import BaseModel
 from datetime import datetime
 
 router = APIRouter()
 
 class AttendanceRequest(BaseModel):
-    face_embedding: str
-    liveness_score: float
+    user_id: int
+    face_embedding: str = "[]"
+    liveness_score: float = 1.0
 
 @router.post("/check-in")
 async def check_in(data: AttendanceRequest, db: Session = Depends(get_db)):
-    # Validasi liveness
-    if data.liveness_score < 0.85:
-        raise HTTPException(
-            status_code=400,
-            detail="⚠️ Liveness verification failed! Gunakan wajah asli."
-        )
-        
-    # Ambil semua user dari database
-    users = db.query(User).all()
-    users_data = [
-        {
-            "id": u.id,
-            "face_embedding": u.face_embedding,
-            "nama": u.nama_lengkap
-        }
-        for u in users
-    ]
+    user = db.query(User).filter(User.id == data.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan")
     
-    # Verifikasi wajah
-    result = verify_face(data.face_embedding, users_data)
-    
-    if not result["matched"]:
-        raise HTTPException(
-            status_code=404,
-            detail="❌ Wajah tidak dikenali. Silakan registrasi dulu."
-        )
-        
-    # Cek apakah sudah absen hari ini
+    # 🔥 PENTING: Cek apakah wajah sudah terdaftar
+    # Jika face_embedding kosong atau masih default "[]", tolak absensi
+    if not user.face_embedding or user.face_embedding == "[]":
+        raise HTTPException(status_code=403, detail="⚠️ Anda belum mendaftarkan wajah! Silakan daftar wajah terlebih dahulu.")
+
     today = datetime.now().strftime("%Y-%m-%d")
     existing = db.query(Attendance).filter(
-        Attendance.user_id == result["user"]["id"],
+        Attendance.user_id == data.user_id,
         Attendance.tanggal == today
     ).first()
     
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"⚠️ Sudah absen hari ini pada pukul {existing.waktu_masuk}"
-        )
+        raise HTTPException(status_code=400, detail=f"⚠️ Sudah absen hari ini pada pukul {existing.waktu_masuk}")
     
-    # ===== FITUR ADMIN SETTINGS =====
-    # Ambil setting dari database
     settings_db = db.query(Settings).first()
+    jam_target = settings_db.jam_masuk if settings_db else "07:00"
+    toleransi_menit = settings_db.toleransi if settings_db else 15
     
-    # Default values kalau belum diset
-    jam_target = "07:00"
-    toleransi_menit = 15
-    
-    if settings_db:
-        jam_target = settings_db.jam_masuk
-        toleransi_menit = settings_db.toleransi
-    
-    # Parse jam masuk
     jam_masuk = datetime.strptime(jam_target, "%H:%M").time()
     waktu_sekarang = datetime.now().time()
     
-    # Hitung status keterlambatan
     if waktu_sekarang > jam_masuk:
-        # Hitung selisih menit
         delta = datetime.combine(datetime.today(), waktu_sekarang) - datetime.combine(datetime.today(), jam_masuk)
         telat_menit = delta.seconds // 60
         
         if telat_menit > toleransi_menit:
             status = "Terlambat"
-            keterangan = f"Terlambat {telat_menit} menit (Toleransi: {toleransi_menit} menit)"
+            keterangan = f"Terlambat {telat_menit} menit"
         else:
             status = "Tepat Waktu"
-            keterangan = f"Hadir (Masih dalam toleransi {toleransi_menit} menit)"
+            keterangan = f"Hadir (toleransi {toleransi_menit} menit)"
     else:
         status = "Tepat Waktu"
         keterangan = "Hadir lebih awal"
-    # ================================
     
-    # Simpan absensi
     attendance_record = Attendance(
-        user_id=result["user"]["id"],
+        user_id=data.user_id,
         tanggal=today,
         waktu_masuk=datetime.now().strftime("%H:%M:%S"),
         status=status,
-        confidence_score=result["confidence"]
+        keterangan=keterangan,
+        confidence_score=data.liveness_score
     )
     
     db.add(attendance_record)
     db.commit()
     
     return {
-        "message": f"✅ Absensi berhasil!\nNama: {result['user']['nama']}\nStatus: {status}\nWaktu: {datetime.now().strftime('%H:%M:%S')}",
-        "confidence": round(result["confidence"] * 100, 2),
+        "message": f"✅ Absensi berhasil!\nNama: {user.nama_lengkap}\nStatus: {status}\nWaktu: {datetime.now().strftime('%H:%M:%S')}",
         "status": status,
         "keterangan": keterangan
     }
@@ -109,7 +74,7 @@ async def check_in(data: AttendanceRequest, db: Session = Depends(get_db)):
 async def get_today_attendance(date: str = Query(None), db: Session = Depends(get_db)):
     if not date:
         date = datetime.now().strftime("%Y-%m-%d")
-        
+    
     records = db.query(Attendance).filter(Attendance.tanggal == date).all()
     result = []
     for r in records:
@@ -120,6 +85,7 @@ async def get_today_attendance(date: str = Query(None), db: Session = Depends(ge
             "nim": user.nim_nip if user else "Unknown",
             "waktu_masuk": r.waktu_masuk,
             "status": r.status,
+            "keterangan": r.keterangan,
             "confidence": r.confidence_score
         })
     return result
@@ -129,7 +95,23 @@ async def delete_attendance(attendance_id: int, db: Session = Depends(get_db)):
     record = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Data absensi tidak ditemukan")
-        
+    
     db.delete(record)
     db.commit()
     return {"message": "✅ Data absensi berhasil dihapus"}
+
+# 🔥 Endpoint Statistik Realtime untuk Dashboard
+@router.get("/stats/today")
+async def get_today_stats(db: Session = Depends(get_db)):
+    today = datetime.now().strftime("%Y-%m-%d")
+    records = db.query(Attendance).filter(Attendance.tanggal == today).all()
+    
+    total = len(records)
+    on_time = sum(1 for r in records if r.status == "Tepat Waktu")
+    late = sum(1 for r in records if r.status == "Terlambat")
+    
+    return {
+        "total": total,
+        "on_time": on_time,
+        "late": late
+    }

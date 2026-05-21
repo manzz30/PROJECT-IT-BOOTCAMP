@@ -5,8 +5,7 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Model input
-class SetUpdate(BaseModel):
+class SettingsUpdate(BaseModel):
     jam_masuk: str
     toleransi: int
     password_check: str
@@ -14,29 +13,26 @@ class SetUpdate(BaseModel):
 
 @router.get("/get-settings")
 def get_config(db: Session = Depends(get_db)):
-    # Ambil data pertama, kalau belum ada bikin baru
     config = db.query(Settings).first()
     if not config:
         config = Settings()
         db.add(config)
         db.commit()
     
-    # Jangan return password asli
     return {
         "jam_masuk": config.jam_masuk,
         "toleransi": config.toleransi
     }
 
 @router.post("/update-settings")
-def update_config(data: SetUpdate, db: Session = Depends(get_db)):
+def update_config(data: SettingsUpdate, db: Session = Depends(get_db)):
     config = db.query(Settings).first()
     if not config:
         config = Settings()
         db.add(config)
 
-    # Validasi password admin
     if data.password_check != config.admin_pass:
-        raise HTTPException(status_code=401, detail="Password salah")
+        raise HTTPException(status_code=401, detail="Password admin salah")
 
     config.jam_masuk = data.jam_masuk
     config.toleransi = data.toleransi
